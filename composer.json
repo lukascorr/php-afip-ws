@@ -1,5 +1,5 @@
 {
-  "name": "multinexo/php-afip-ws",
+  "name": "lukascorr/php-afip-ws",
   "description": "Librería PHP para interactuar con el webservice de AFIP (Argentina -> factura electrónica).",
   "type": "library",
   "keywords": [

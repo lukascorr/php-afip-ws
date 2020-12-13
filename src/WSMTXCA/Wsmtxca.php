@@ -112,6 +112,9 @@ class Wsmtxca extends Invoice
 
     public function getAvailablePosNumbers(): array
     {
+        if (!$this->service->configuracion->production) {
+            return [];
+        }
         $pos_numbers = [];
         /** @var array $authRequest */
         $authRequest = $this->service->authRequest;

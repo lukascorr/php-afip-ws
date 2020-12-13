@@ -32,22 +32,19 @@ class ManejadorResultados
     // Recupera información de errores detectados lanzandolo en una excepción.
     public function procesar(stdClass $resultado): void
     {
-        if (isset($resultado->Errors)) {
-            $errores = reset($resultado->Errors)->Msg;
+        $errores = null;
+        //Porque el error viene de otra forma si existe message
+        if (!property_exists($resultado, 'message')) {
+            $errores = isset($resultado->arrayErrores) ?
+                (isset($resultado->arrayErrores->codigoDescripcion) ?
+                    $resultado->arrayErrores->codigoDescripcion
+                    : $resultado->arrayErrores)
+                : null;
         } else {
-            //Porque el error viene de otra forma si existe message
-            if (!property_exists($resultado, 'message')) {
-                $errores = isset($resultado->arrayErrores) ?
-                    (isset($resultado->arrayErrores->codigoDescripcion) ?
-                        $resultado->arrayErrores->codigoDescripcion->descripcion
-                        : $resultado->arrayErrores)
-                    : null;
-            } else {
-                $errores = $resultado->getMessage();
-            }
+            $errores = $resultado->getMessage();
         }
 
-        if (!empty($errores)) {
+        if ($errores) {
             throw new WsException($errores);
         }
     }

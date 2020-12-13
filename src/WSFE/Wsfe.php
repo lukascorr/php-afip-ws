@@ -618,6 +618,9 @@ class Wsfe extends Invoice
 
     public function getAvailablePosNumbers(): array
     {
+        if (!$this->service->configuracion->production) {
+            return [];
+        }
         $pos_numbers = [];
         $result = $this->FEParamGetPtosVenta();
 

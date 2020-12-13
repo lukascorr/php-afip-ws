@@ -22,7 +22,7 @@ class Authentication
     /** @var stdClass|null */
     private $service;
     /** @var mixed */
-    private $configuracion;
+    public $configuracion;
     /** @var array|stdClass|string */
     public $authRequest;
     /** @var SoapClient */
@@ -33,6 +33,7 @@ class Authentication
     {
         $conf = AfipWebService::setConfig($newConf);
         $this->configuracion = json_decode(json_encode($conf));
+        $this->configuracion->production = !$newConf->sandbox;
 
         $this->auth($ws);
     }
