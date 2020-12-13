@@ -42,7 +42,7 @@ class Wsaa
 
         $expirationTime = self::getXmlAttribute($path, ['header', 'expirationTime']);
 
-        if (strtotime((string) $expirationTime) < strtotime(date('Y-m-d h:m:i'))) {
+        if (strtotime((string) $expirationTime) < strtotime(date('Y-m-d h:i:s'))) {
             self::authenticate($service);
 
             return true;
@@ -121,7 +121,7 @@ class Wsaa
      *
      * return Ticket de Acceso generado por AFIP en formato xml
      */
-    private static function callWSAA(stdClass $service, string $CMS): stdClass
+    private static function callWSAA(stdClass $service, string $CMS)
     {
         $client = new SoapClient($service->configuracion->archivos->wsaaWsdl, [
             'proxy_port' => $service->configuracion->proxyPort,
