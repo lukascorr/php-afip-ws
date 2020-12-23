@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Multinexo\WSAA;
 
+use Multinexo\Drivers\FileSystemDriver;
+use Multinexo\Drivers\LocalFileSystem;
 use Multinexo\Exceptions\WsException;
 use Multinexo\Models\GeneralHelper;
 use Multinexo\Models\Validaciones;
@@ -36,11 +38,13 @@ class Wsaa
     {
         $path = $service->configuracion->dir->xml_generados . 'TA-' . $service->configuracion->cuit . '-' . $service->ws . '.xml';
 
-        if (!file_exists($path)) {
+        if (!$service->fs->exists($path)) {
             self::authenticate($service);
         }
 
-        $expirationTime = self::getXmlAttribute($path, ['header', 'expirationTime']);
+        $xml = $service->fs->get($path);
+
+        $expirationTime = self::getXmlAttribute($xml, ['header', 'expirationTime']);
 
         if (strtotime((string) $expirationTime) < strtotime(date('Y-m-d h:i:s'))) {
             self::authenticate($service);
@@ -66,7 +70,8 @@ class Wsaa
         $TRA->header->addChild('generationTime', date('c', time() - 60));
         $TRA->header->addChild('expirationTime', date('c', time() + 60));
         $TRA->addChild('service', GeneralHelper::getOriginalWsName($service->ws));
-        $TRA->asXML($service->configuracion->dir->xml_generados . 'TRA-' . $service->ws . '.xml');
+        $content = $TRA->asXML();
+        $service->fs->put($service->configuracion->dir->xml_generados . 'TRA-' . $service->ws . '.xml', $content);
     }
 
     /**
@@ -82,10 +87,17 @@ class Wsaa
         $dir = $configuracion->dir;
         $archivos = $configuracion->archivos;
 
+        $inputXmlPath = tempnam(sys_get_temp_dir(), '');
+        $certificadoPath = tempnam(sys_get_temp_dir(), '');
+        $outputTmpPath = tempnam(sys_get_temp_dir(), '');
+
+        file_put_contents($inputXmlPath, $service->fs->get($dir->xml_generados . 'TRA-' . $service->ws . '.xml'));
+        file_put_contents($certificadoPath, $service->fs->get($archivos->certificado));
+
         $STATUS = openssl_pkcs7_sign(
-            $dir->xml_generados . 'TRA-' . $service->ws . '.xml',
-            $dir->xml_generados . 'TRA-' . $service->ws . '.tmp',
-            'file://' . $archivos->certificado,
+            $inputXmlPath,
+            $outputTmpPath,
+            'file://' . $certificadoPath,
             [
                 'file://' . $archivos->clavePrivada,
                 $configuracion->passPhrase,
@@ -97,7 +109,7 @@ class Wsaa
         if (!$STATUS) {
             throw new WsException('Error en la generacion de la firma PKCS#7');
         }
-        $inf = fopen($dir->xml_generados . 'TRA-' . $service->ws . '.tmp', 'r');
+        $inf = fopen($outputTmpPath, 'r');
         $i = 0;
         $CMS = '';
 
@@ -108,8 +120,10 @@ class Wsaa
             }
         }
         fclose($inf);
-        //  unlink("TRA.xml");
-        unlink($dir->xml_generados . 'TRA-' . $service->ws . '.tmp');
+
+        unlink($inputXmlPath);
+        unlink($certificadoPath);
+        unlink($outputTmpPath);
 
         return $CMS;
     }
@@ -131,11 +145,11 @@ class Wsaa
             'exceptions' => 0,
         ]);
         $results = $client->loginCms(['in0' => $CMS]);
-        file_put_contents(
+        $service->fs->put(
             $service->configuracion->dir->xml_generados . 'request-loginCms.xml',
             $client->__getLastRequest()
         );
-        file_put_contents(
+        $service->fs->put(
             $service->configuracion->dir->xml_generados . 'response-loginCms.xml',
             $client->__getLastResponse()
         );
@@ -159,14 +173,21 @@ class Wsaa
 
         // Se crean los directorios en donde se alojaran las claves y los xmls generados en caso que no existan
         foreach ($dir as $directory) {
-            !is_dir($directory) ? mkdir($directory, 0777, true) : false;
+            !$service->fs->isDirectory($directory) ? $service->fs->makeDirectory($directory, 0777, true) : false;
         }
 
         // Se verifica que exista la clave privada, el certificado y el wsaa.wsdl
-        foreach ($archivos as $archivo) {
-            if (!file_exists($archivo)) {
+        foreach ($archivos as $key => $archivo) {
+            $exists = false;
+
+            if($key == 'certificado')
+                $exists = $service->fs->exists($archivo);
+            else
+                $exists = file_exists($archivo); // privateKey y wsaa.wsdl son locales a la libreria
+
+            if (!$exists) {
                 throw new WsException(
-                    'Error al abrir el archivo "' . basename($archivo) . PHP_EOL . '", verifique su existencia'
+                    'Error al abrir el archivo ' .$archivo . ', verifique su existencia'
                 );
             }
         }
@@ -176,7 +197,7 @@ class Wsaa
         $TA = self::callWSAA($service, $CMS);
 
         $filename = $dir->xml_generados . 'TA-' . $service->configuracion->cuit . '-' . $service->ws . '.xml';
-        if (!file_put_contents($filename, $TA)) {
+        if (!$service->fs->put($filename, $TA)) {
             throw new WsException('Hubo un error al tratar de autenticarse');
         }
 
@@ -190,9 +211,9 @@ class Wsaa
      *
      * @return bool|SimpleXMLElement|SimpleXMLElement[]
      */
-    private static function getXmlAttribute(string $path, array $nodes = [])
+    private static function getXmlAttribute(string $xml, array $nodes = [])
     {
-        $TaXml = simplexml_load_file($path);
+        $TaXml = simplexml_load_string($xml);
         foreach ($nodes as $node) {
             if (isset($TaXml->{$node})) {
                 $TaXml = $TaXml->{$node};
