@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Multinexo\Auth;
 
+use Multinexo\Drivers\FileSystemDriver;
+use Multinexo\Drivers\LocalFileSystem;
 use Multinexo\Exceptions\WsException;
 use Multinexo\Models\AfipConfig;
 use Multinexo\Models\AfipWebService;
@@ -21,6 +23,8 @@ class Authentication
 {
     /** @var stdClass|null */
     private $service;
+    /** @var FileSystemDriver */
+    public $fs;
     /** @var mixed */
     public $configuracion;
     /** @var array|stdClass|string */
@@ -33,6 +37,7 @@ class Authentication
     {
         $conf = AfipWebService::setConfig($newConf);
         $this->configuracion = json_decode(json_encode($conf));
+        $this->fs = $newConf->fs;
         $this->configuracion->production = !$newConf->sandbox;
 
         $this->auth($ws);
@@ -44,6 +49,7 @@ class Authentication
 
         try {
             $this->service->ws = $ws;
+            $this->service->fs = $this->fs ?? new LocalFileSystem();
             $this->service->configuracion = $this->configuracion;
             (new Wsaa())->checkTARenovation($this->service);
             $this->client = $this->getClient();
@@ -62,10 +68,12 @@ class Authentication
             . '-' . $this->service->ws . '.xml';
         $wsdl = dirname(__DIR__) . '/' . strtoupper($this->service->ws) . '/' . $this->service->ws . '.wsdl';
 
-        foreach ([$ta, $wsdl] as $item) {
-            if (!file_exists($item)) {
-                throw new WsException('Fallo al abrir: ' . $item);
-            }
+        if(!$this->service->fs->exists($ta)){
+            throw new WsException('Fallo al abrir: ' . $ta);
+        }
+
+        if (!file_exists($wsdl)) {
+            throw new WsException('Fallo al abrir: ' . $wsdl);
         }
 
         return $this->connectToSoapClient($wsdl, $this->service->configuracion->url->{$this->service->ws});
@@ -91,7 +99,8 @@ class Authentication
     {
         $ta = $this->service->configuracion->dir->xml_generados . 'TA-' . $this->service->configuracion->cuit
             . '-' . $this->service->ws . '.xml';
-        $TA = simplexml_load_file($ta);
+        $content = $this->service->fs->get($ta);
+        $TA = simplexml_load_string($content);
         if ($TA === false) {
             return '';
         }

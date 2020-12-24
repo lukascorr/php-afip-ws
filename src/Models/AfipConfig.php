@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace Multinexo\Models;
 
+use Multinexo\Drivers\FileSystemDriver;
+
 class AfipConfig
 {
     /** @var bool */
@@ -26,6 +28,9 @@ class AfipConfig
 
     /** @var string */
     public $privatekey_path;
+
+    /** @var FileSystemDriver */
+    public $fs;
 
     public function setSandbox(bool $value = null): void
     {
@@ -50,5 +55,10 @@ class AfipConfig
     public function setPrivateKeyFilename(string $privatekey_path): void
     {
         $this->privatekey_path = $privatekey_path;
+    }
+
+    public function setFileSystemDriver(FileSystemDriver $fs): void
+    {
+        $this->fs = $fs;
     }
 }
