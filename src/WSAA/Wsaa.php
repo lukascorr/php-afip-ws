@@ -46,7 +46,7 @@ class Wsaa
 
         $expirationTime = self::getXmlAttribute($xml, ['header', 'expirationTime']);
 
-        if (strtotime((string) $expirationTime) < strtotime(date('Y-m-d h:i:s'))) {
+        if (strtotime((string) $expirationTime) < strtotime(date('Y-m-d H:i:s'))) {
             self::authenticate($service);
 
             return true;
