@@ -30,7 +30,7 @@ class ManejadorResultados
     }
 
     // Recupera información de errores detectados lanzandolo en una excepción.
-    public function procesar(stdClass $resultado): void
+    public function procesar($resultado): void
     {
         $errores = null;
         //Porque el error viene de otra forma si existe message

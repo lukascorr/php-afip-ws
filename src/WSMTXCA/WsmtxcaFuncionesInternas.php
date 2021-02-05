@@ -37,8 +37,6 @@ trait WsmtxcaFuncionesInternas
             ]
         );
 
-        $this->checkSoapFault($resultado);
-
         $this->resultado->procesar($resultado);
 
         return $resultado->comprobante;
@@ -58,7 +56,6 @@ trait WsmtxcaFuncionesInternas
                 'fechaHasta' => $data->fechaHasta,
             ]
         );
-        $this->checkSoapFault($resultado);
 
         $this->resultado->procesar($resultado);
 
@@ -77,7 +74,6 @@ trait WsmtxcaFuncionesInternas
                 'CAEA' => $data->caea,
             ]
         );
-        $this->checkSoapFault($resultado);
 
         $this->resultado->procesar($resultado);
 
@@ -108,8 +104,6 @@ trait WsmtxcaFuncionesInternas
             ]
         );
 
-        $this->checkSoapFault($resultado);
-
         $this->resultado->procesar($resultado);
 
         return $resultado->CAEAResponse;
@@ -135,8 +129,6 @@ trait WsmtxcaFuncionesInternas
                 'comprobanteCAERequest' => $cbte,
             ]
         );
-
-        $this->checkSoapFault($resultado);
 
         $this->resultado->procesar($resultado);
 
@@ -187,24 +179,6 @@ trait WsmtxcaFuncionesInternas
 
         if (is_soap_fault($result)) {
             throw new WsException($result->getMessage(), 503);
-        }
-
-        return $result;
-    }
-
-    // TODO: Exception
-    public function checkSoapFault(stdClass $result): stdClass
-    {
-        if (is_soap_fault($result)) {
-            var_dump(
-                [
-                    'SoapErrors' => [
-                        'Code' => $result->faultcode,
-                        'Description' => $result->faultstring,
-                        'Detail' => $result->detail,
-                    ],
-                ]
-            );
         }
 
         return $result;
@@ -316,7 +290,6 @@ trait WsmtxcaFuncionesInternas
                 'comprobanteCAEARequest' => $cbte,
             ]
         );
-        $this->checkSoapFault($result);
 
         return $result->comprobante;
     }
@@ -329,7 +302,6 @@ trait WsmtxcaFuncionesInternas
                 'CAEA' => $caea,
             ]
         );
-        $this->checkSoapFault($result);
 
         return $result->comprobante;
     }
@@ -343,7 +315,6 @@ trait WsmtxcaFuncionesInternas
                 'numeroPuntoVenta' => $ptoVta,
             ]
         );
-        $this->checkSoapFault($result);
 
         return $result->comprobante;
     }
@@ -356,7 +327,6 @@ trait WsmtxcaFuncionesInternas
                 'CAEA' => $caea,
             ]
         );
-        $this->checkSoapFault($result);
 
         return $result->arrayPuntosVenta;
     }

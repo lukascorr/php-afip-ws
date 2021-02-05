@@ -108,10 +108,10 @@ class WsParametros
     }
 
     // Consultar Puntos de Venta.
-    public function consultarPuntosVenta(\SoapClient $client, array $authRequest): stdClass
+    public function consultarPuntosVenta($service): stdClass
     {
-        $resultado = $client->consultarPuntosVenta([
-            'authRequest' => $authRequest,
+        $resultado = $service->client->consultarPuntosVenta([
+            'authRequest' => $service->authRequest,
         ]);
 
         $this->resultado->procesar($resultado);

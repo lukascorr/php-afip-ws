@@ -205,21 +205,6 @@ class Wsfe extends Invoice
         return $result->FEDummyResult;
     }
 
-    public function connectToSoapClient(string $wsdlPath, string $url): SoapClient
-    {
-        return new SoapClient(
-            $wsdlPath,
-            [
-                'soap_version' => SOAP_1_2,
-                'location' => $url,
-                //       'proxy_host'   => "proxy",
-                //       'proxy_port'   => 80,
-                'exceptions' => 0,
-                'trace' => 1,
-            ]
-        );
-    }
-
     /*
      * Permite adaptar los datos enviados en el array de comprobante a los campos definidos por el ws de la AFIP
      * para la generacion de comprobantes sin items.

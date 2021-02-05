@@ -34,7 +34,7 @@ class Wsaa
      *
      * @throws WsException
      */
-    public function checkTARenovation(stdClass $service): bool
+    public function checkTARenovation($service): bool
     {
         $path = $service->configuracion->dir->xml_generados . 'TA-' . $service->configuracion->cuit . '-' . $service->ws . '.xml';
 
@@ -58,7 +58,7 @@ class Wsaa
     /**
      * Crea un pedido de ticket de acceso (Access Request Ticket (TRA)).
      */
-    private static function createTRA(stdClass $service): void
+    private static function createTRA($service): void
     {
         $TRA = new SimpleXMLElement(
             '<?xml version="1.0" encoding="UTF-8"?>' .
@@ -81,7 +81,7 @@ class Wsaa
      *
      * @throws WsException
      */
-    private static function signTRA(stdClass $service): string
+    private static function signTRA($service): string
     {
         $configuracion = $service->configuracion;
         $dir = $configuracion->dir;
@@ -135,7 +135,7 @@ class Wsaa
      *
      * return Ticket de Acceso generado por AFIP en formato xml
      */
-    private static function callWSAA(stdClass $service, string $CMS)
+    private static function callWSAA($service, string $CMS)
     {
         $client = new SoapClient($service->configuracion->archivos->wsaaWsdl, [
             'proxy_port' => $service->configuracion->proxyPort,
@@ -165,7 +165,7 @@ class Wsaa
      *
      * @throws WsException
      */
-    private static function authenticate(stdClass $service): bool
+    private static function authenticate($service): bool
     {
         //        ini_set("soap.wsdl_cache_enabled", "0");
         $dir = $service->configuracion->dir;

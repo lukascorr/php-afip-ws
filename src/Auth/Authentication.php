@@ -21,8 +21,6 @@ use stdClass;
 
 class Authentication
 {
-    /** @var stdClass|null */
-    private $service;
     /** @var FileSystemDriver */
     public $fs;
     /** @var mixed */
@@ -37,38 +35,31 @@ class Authentication
     {
         $conf = AfipWebService::setConfig($newConf);
         $this->configuracion = json_decode(json_encode($conf));
-        $this->fs = $newConf->fs;
         $this->configuracion->production = !$newConf->sandbox;
-
-        $this->auth($ws);
+        $this->ws = $ws;
+        $this->fs = $newConf->fs ?? new LocalFileSystem();
+        $this->connectAfip();
     }
 
-    public function auth(string $ws): void
+    private function connectAfip()
     {
-        $this->service = new stdClass();
-
         try {
-            $this->service->ws = $ws;
-            $this->service->fs = $this->fs ?? new LocalFileSystem();
-            $this->service->configuracion = $this->configuracion;
-            (new Wsaa())->checkTARenovation($this->service);
+            (new Wsaa())->checkTARenovation($this);
             $this->client = $this->getClient();
             $this->authRequest = $this->getCredentials();
-            $this->service->client = $this->client;
-            AfipWebService::checkWsStatusOrFail($this->service->ws, $this->client);
-            $this->service = null;
+            AfipWebService::checkWsStatusOrFail($this->ws, $this->client);
         } catch (WsException $exception) {
             throw new WsException('Error de autenticación: ' . $exception->getMessage());
         }
     }
 
-    public function getClient(): SoapClient
+    private function getClient(): SoapClient
     {
-        $ta = $this->service->configuracion->dir->xml_generados . 'TA-' . $this->service->configuracion->cuit
-            . '-' . $this->service->ws . '.xml';
-        $wsdl = dirname(__DIR__) . '/' . strtoupper($this->service->ws) . '/' . $this->service->ws . '.wsdl';
+        $ta = $this->configuracion->dir->xml_generados . 'TA-' . $this->configuracion->cuit
+            . '-' . $this->ws . '.xml';
+        $wsdl = dirname(__DIR__) . '/' . strtoupper($this->ws) . '/' . $this->ws . '.wsdl';
 
-        if(!$this->service->fs->exists($ta)){
+        if(!$this->fs->exists($ta)){
             throw new WsException('Fallo al abrir: ' . $ta);
         }
 
@@ -76,16 +67,11 @@ class Authentication
             throw new WsException('Fallo al abrir: ' . $wsdl);
         }
 
-        return $this->connectToSoapClient($wsdl, $this->service->configuracion->url->{$this->service->ws});
-    }
-
-    public function connectToSoapClient(string $wsdlPath, string $url): SoapClient
-    {
         return new SoapClient(
-            $wsdlPath,
+            $wsdl,
             [
                 'soap_version' => SOAP_1_2,
-                'location' => $url,
+                'location' => $this->configuracion->url->{$this->ws},
                 'exceptions' => 0,
                 'trace' => 1,
             ]
@@ -95,11 +81,11 @@ class Authentication
     /**
      * @return array|stdClass|string
      */
-    public function getCredentials()
+    private function getCredentials()
     {
-        $ta = $this->service->configuracion->dir->xml_generados . 'TA-' . $this->service->configuracion->cuit
-            . '-' . $this->service->ws . '.xml';
-        $content = $this->service->fs->get($ta);
+        $ta = $this->configuracion->dir->xml_generados . 'TA-' . $this->configuracion->cuit
+            . '-' . $this->ws . '.xml';
+        $content = $this->fs->get($ta);
         $TA = simplexml_load_string($content);
         if ($TA === false) {
             return '';
@@ -107,19 +93,19 @@ class Authentication
         $token = $TA->credentials->token;
         $sign = $TA->credentials->sign;
         $authRequest = '';
-        if ($this->service->ws === 'wsmtxca') {
+        if ($this->ws === 'wsmtxca') {
             $authRequest = [
                 'token' => $token,
                 'sign' => $sign,
-                'cuitRepresentada' => $this->service->configuracion->cuit,
+                'cuitRepresentada' => $this->configuracion->cuit,
             ];
-        } elseif ($this->service->ws === 'wsfe') {
+        } elseif ($this->ws === 'wsfe') {
             $authRequest = [
                 'Token' => $token,
                 'Sign' => $sign,
-                'Cuit' => $this->service->configuracion->cuit,
+                'Cuit' => $this->configuracion->cuit,
             ];
-        } elseif ($this->service->ws === 'wspn3') {
+        } elseif ($this->ws === 'wspn3') {
             $authRequest = new stdClass();
             $authRequest->token = (string) $token;
             $authRequest->sign = (string) $sign;

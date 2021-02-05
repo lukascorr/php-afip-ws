@@ -115,11 +115,10 @@ class Wsmtxca extends Invoice
         if (!$this->service->configuracion->production) {
             return [$this->datos->puntoVenta];
         }
-        $pos_numbers = [];
-        /** @var array $authRequest */
-        $authRequest = $this->service->authRequest;
-        $result = (new WsParametros())->consultarPuntosVenta($this->service->client, $authRequest);
 
+        $result = (new WsParametros())->consultarPuntosVenta($this->service);
+
+        $pos_numbers = [];
         $fetched_pos_array = $result->arrayPuntosVenta ?? [];
         foreach ($fetched_pos_array as $fetched_pos) {
             if ($fetched_pos->bloqueado === 'No') {
