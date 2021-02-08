@@ -94,13 +94,14 @@ class Wsfe extends Invoice
         $this->resultado->procesar($resultado);
 
         if (reset($resultado)->FeDetResp->FECAEDetResponse->Resultado === 'R') {
-            $observaciones = reset($resultado)->FeDetResp->FECAEDetResponse->Observaciones->Obs->Msg ?? '';
+            $observaciones = reset($resultado)->FeDetResp->FECAEDetResponse->Observaciones->Obs->Msg ?? null;
+            $errors = reset($resultado)->Errors ?? null;
 
-            if (empty($observaciones)) {
-                throw new AfipUnhandledException(print_r('FECAEDetResponse: ' . reset($resultado)->FeDetResp->FECAEDetResponse, true));
+            if (empty($observaciones) && empty($errors)) {
+                throw new AfipUnhandledException(print_r('FECAEDetResponse: ' . json_encode(reset($resultado)->FeDetResp->FECAEDetResponse), true));
             }
 
-            throw new WsException($observaciones);
+            throw new WsException($observaciones ?? $errors);
         }
 
         // TODO: Muestro eventos en estructura separada? -> $events = ['path' => $resultado];

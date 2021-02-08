@@ -49,7 +49,7 @@ class Authentication
             $this->authRequest = $this->getCredentials();
             AfipWebService::checkWsStatusOrFail($this->ws, $this->client);
         } catch (WsException $exception) {
-            throw new WsException('Error de autenticación: ' . $exception->getMessage());
+            throw $exception;
         }
     }
 
