@@ -136,9 +136,13 @@ trait Validaciones
             'arrayOtrosTributos' => v::optional(v::arrayType()),
             'arraySubtotalesIVA' => v::optional(v::objectType()),
         ];
+        $isSandbox = $this->service->configuracion->sandbox ?? false;
+
         if ($this->ws === WebServiceEnum::WSFE) {
             $wsReglasPlus = [
-                'puntoVenta' => v::in($this->getAvailablePosNumbers()),
+                'puntoVenta' => $isSandbox
+                    ? v::notEmpty()->intVal()->between(1, 9999)->length(1, 4)
+                    : v::in($this->getAvailablePosNumbers()),
                 'arrayOpcionales' => v::optional(v::objectType()),
             ];
         } elseif ($this->ws === WebServiceEnum::WSMTXCA) {

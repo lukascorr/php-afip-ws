@@ -44,6 +44,8 @@ class AfipWebService
         }
         unset($conf['url_production']);
 
+        $conf['sandbox'] = $mode_sandbox;
+
         return $conf;
     }
 
