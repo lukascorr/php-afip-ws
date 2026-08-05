@@ -328,6 +328,13 @@ class Wsfe extends InvoiceWebService
             $document->FeDetReq->FECAEDetRequest->{'CbtesAsoc'} = $arrayComprobantesAsociados;
         }
 
+        if ($invoice->periodoAsociado) {
+            $document->FeDetReq->FECAEDetRequest->{'PeriodoAsoc'} = (object) [
+                'FchDesde' => str_replace('-', '', $invoice->periodoAsociado['fechaDesde']),
+                'FchHasta' => str_replace('-', '', $invoice->periodoAsociado['fechaHasta']),
+            ];
+        }
+
         $arrayOtrosTributos = [];
         foreach ($invoice->arrayOtrosTributos as $tributo) {
             $arrayOtrosTributos[] = [

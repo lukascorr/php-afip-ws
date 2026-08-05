@@ -22,7 +22,7 @@ class Authentication
     /** @var stdClass|null */
     private $service;
     /** @var mixed */
-    private $configuracion;
+    public $configuracion;
     /** @var array|stdClass|string */
     public $authRequest;
     /** @var SoapClient */

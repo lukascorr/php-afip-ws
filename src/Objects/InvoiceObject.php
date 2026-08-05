@@ -71,6 +71,8 @@ class InvoiceObject extends FiscalDocumentDto
     public $subtotalesIVA = [];
     /** @var \stdClass[] */
     public $opcionales = [];
+    /** @var ?array{fechaDesde: string, fechaHasta: string} */
+    public $periodoAsociado = null;
     /** @var string */
     public $observaciones = '';
     /** @var array */
